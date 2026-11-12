@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Premium - Ance YOUBI</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: rgba(30, 41, 59, 0.7);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --text: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 40%);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
+        .header p { font-size: 0.8rem; color: #94a3b8; margin-top: 5px; }
+        
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .user-msg {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-msg {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 4px;
+        }
+        .bot-msg.loading {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ RAG Premium Assistant</h1>
+            <p>Basé sur votre document</p>
+        </div>
+        <div class="chat-box" id="chat">
+            <div class="message bot-msg">Bonjour ! Je suis votre assistant. Posez-moi une question sur le document.</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="question" placeholder="Posez votre question..." onkeypress="if(event.key==='Enter') envoyer()">
+            <button id="btn" onclick="envoyer()">Envoyer</button>
+        </div>
+    </div>
+
+    <script>
+        async function envoyer() {
+            const input = document.getElementById('question');
+            const chat = document.getElementById('chat');
+            const btn = document.getElementById('btn');
+            const question = input.value.trim();
+            if(!question) return;
+
+            // Afficher la question
+            chat.innerHTML += `<div class="message user-msg">${question}</div>`;
+            input.value = '';
+            btn.disabled = true;
+
+            // Afficher le chargement
+            const loadingId = 'loading-' + Date.now();
+            chat.innerHTML += `<div class="message bot-msg loading" id="${loadingId}">L'agent analyse le document...</div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            try {
+                const res = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question: question})
+                });
+                const data = await res.json();
+                
+                // Remplacer le chargement par la réponse
+                document.getElementById(loadingId).outerHTML = `<div class="message bot-msg">${data.reponse || data.erreur}</div>`;
+            } catch (e) {
+                document.getElementById(loadingId).outerText = "Erreur de connexion.";
+            } finally {
+                btn.disabled = false;
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
