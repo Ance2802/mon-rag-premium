@@ -1,3 +1,5 @@
+🚀 **Démo en ligne :** [https://mon-rag-premium.onrender.com](https://mon-rag-premium.onrender.com)
+
 # ✨ RAG Premium Assistant (Docker + Gemini + ChromaDB)
 
 ## 📝 Description
